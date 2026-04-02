@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Customer {
+  id                  String     @id @default(uuid())
+  shopify_customer_id String?    @unique
+  name                String
+  phone               String     @unique
+  email               String?
+  segment             String     @default("one_time")
+  rto_flag            Boolean    @default(false)
+  rto_count           Int        @default(0)
+  total_orders        Int        @default(0)
+  last_order_date     DateTime?
+  notes               String?
+  created_at          DateTime   @default(now())
+  updated_at          DateTime   @updatedAt
+
+  orders              Order[]
+  tasks               Task[]
+  call_logs           CallLog[]
+}
+
+model Order {
+  id                  String     @id @default(uuid())
+  customer_id         String
+  customer            Customer   @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  shopify_order_id    String?    @unique
+  order_number        String?
+  line_items          String     // JSON stored as string for SQLite
+  total_price         Float?     
+  fulfillment_status  String     @default("unfulfilled")
+  tracking_number     String?
+  delivery_status     String     @default("pending")
+  ordered_at          DateTime
+  delivered_at        DateTime?
+  source              String     @default("shopify")
+  created_at          DateTime   @default(now())
+  updated_at          DateTime   @updatedAt
+
+  tasks               Task[]
+}
+
+model Task {
+  id                  String     @id @default(uuid())
+  order_id            String
+  order               Order      @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  customer_id         String
+  customer            Customer   @relation(fields: [customer_id], references: [id])
+  task_type           String
+  due_date            DateTime   // Store Date as start of day DateTime
+  status              String     @default("pending")
+  completed_at        DateTime?
+  rescheduled_to      DateTime?
+  created_at          DateTime   @default(now())
+
+  call_logs           CallLog[]
+
+  @@unique([order_id, task_type])
+}
+
+model CallLog {
+  id                  String     @id @default(uuid())
+  task_id             String
+  task                Task       @relation(fields: [task_id], references: [id])
+  customer_id         String
+  customer            Customer   @relation(fields: [customer_id], references: [id])
+  outcome             String
+  note                String?
+  called_at           DateTime   @default(now())
+  agent_name          String?
+}
+
+model Setting {
+  id                      String   @id @default(uuid())
+  review_offset_days      Int      @default(5)
+  reorder_offset_days     Int      @default(20)
+  final_offset_days       Int      @default(30)
+  inactive_threshold_days Int      @default(45)
+  whatsapp_enabled        Boolean  @default(false)
+  whatsapp_phone_id       String?
+  whatsapp_token          String?
+  shopify_store_domain    String?
+  shopify_api_key         String?
+  shopify_api_secret      String?
+  shiprocket_email        String?
+  shiprocket_password     String?
+  updated_at              DateTime @updatedAt
+}
+
+model ProductOverride {
+  id                  String   @id @default(uuid())
+  shopify_product_id  String   @unique
+  product_name        String
+  review_offset_days  Int?
+  reorder_offset_days Int?
+  final_offset_days   Int?
+  created_at          DateTime @default(now())
+}
