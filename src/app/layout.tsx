@@ -27,7 +27,22 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col md:flex-row">
+        {/* Sidebar */}
+        <aside className="w-full md:w-64 bg-slate-900 text-white p-6 shrink-0">
+          <div className="mb-8 font-bold text-xl text-primary-foreground tracking-tight">CureForever CRM</div>
+          <nav className="space-y-4">
+            <a href="/" className="block hover:text-green-400 font-medium">Dashboard</a>
+            <a href="/import" className="block hover:text-green-400 font-medium">Excel Import</a>
+            <a href="/settings" className="block hover:text-green-400 font-medium">Settings</a>
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto bg-gray-50">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
