@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Customer {
@@ -13,7 +14,12 @@ model Customer {
   shopify_customer_id String?    @unique
   name                String
   phone               String     @unique
-  email               String?
+  email               String?   @unique
+  address             String?   
+  city                String?   
+  state               String?   
+  zip                 String?   
+  loyaltyScore        Int?      @default(0)
   segment             String     @default("one_time")
   rto_flag            Boolean    @default(false)
   rto_count           Int        @default(0)
@@ -93,6 +99,20 @@ model Setting {
   shiprocket_email        String?
   shiprocket_password     String?
   updated_at              DateTime @updatedAt
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  role       String   @default("agent") // admin or agent
+  created_at DateTime @default(now())
+}
+
+model SyncLog {
+  id          String   @id @default(uuid())
+  run_at      DateTime @default(now())
+  status      String   @default("success")
+  error       String?
 }
 
 model ProductOverride {
