@@ -33,7 +33,9 @@ export default function RootLayout({
           <div className="mb-8 font-bold text-xl text-primary-foreground tracking-tight">CureForever CRM</div>
           <nav className="space-y-4">
             <a href="/" className="block hover:text-green-400 font-medium">Dashboard</a>
+            <a href="/calendar" className="block hover:text-green-400 font-medium">Task Calendar</a>
             <a href="/import" className="block hover:text-green-400 font-medium">Excel Import</a>
+            <a href="/reports" className="block hover:text-green-400 font-medium">Analytics</a>
             <a href="/settings" className="block hover:text-green-400 font-medium">Settings</a>
           </nav>
         </aside>
