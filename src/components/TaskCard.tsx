@@ -107,8 +107,9 @@ export function TaskCard({ task }: { task: any }) {
             View Product ↗
           </a>
           <p className="mt-2 text-xs text-gray-500">
-            <strong>Last ordered:</strong> {task.order.ordered_at ? new Date(task.order.ordered_at).toLocaleDateString() : 'N/A'} 
+            <strong>Last ordered:</strong> {task.order.ordered_at ? format(new Date(task.order.ordered_at), 'MMM d, yyyy') : 'N/A'} 
           </p>
+
         </div>
 
         <p><strong>Order:</strong> {task.order.order_number || task.order.shopify_order_id}</p>

@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { format } from "date-fns";
+
 
 type User = {
   id: string;
@@ -192,8 +194,9 @@ export default function TeamPage() {
                         </select>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {format(new Date(user.created_at), 'MMM d, yyyy')}
                       </TableCell>
+
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"

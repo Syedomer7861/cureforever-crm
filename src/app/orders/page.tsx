@@ -3,7 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { differenceInDays, startOfDay } from "date-fns";
+import { differenceInDays, startOfDay, format } from "date-fns";
+
 
 
 export const dynamic = "force-dynamic";
@@ -68,7 +69,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: any }
                       </span>
                     </Link>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">{new Date(o.ordered_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-sm text-gray-500">{format(new Date(o.ordered_at), 'MMM d, yyyy')}</TableCell>
+
                   <TableCell>
                     <Badge variant="outline" className="text-gray-600 font-normal">
                       {o.fulfillment_status.toUpperCase()}

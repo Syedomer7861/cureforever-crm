@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';
-import { differenceInDays, startOfDay } from 'date-fns';
+import { differenceInDays, startOfDay, format } from 'date-fns';
+
 
 
 export const dynamic = "force-dynamic";
@@ -134,7 +135,8 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
                             </a>
                           </div>
                         </TableCell>
-                        <TableCell>{new Date(o.ordered_at).toLocaleDateString()}</TableCell>
+                        <TableCell>{format(new Date(o.ordered_at), 'MMM d, yyyy')}</TableCell>
+
                         <TableCell>₹{o.total_price}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{o.delivery_status.toUpperCase()}</Badge>
