@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from 'next/link';
+import { differenceInDays, startOfDay } from 'date-fns';
+
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +30,18 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
             <h1 className="text-4xl font-black text-gray-900">{customer.name}</h1>
-            <p className="text-gray-500 font-medium text-lg flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              {customer.phone}
-            </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-gray-500 font-medium text-lg mt-2">
+              <p className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                {customer.phone}
+              </p>
+              {customer.email && (
+                <p className="flex items-center gap-2">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  <a href={`mailto:${customer.email}`} className="text-blue-600 hover:underline">{customer.email}</a>
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex gap-2">
             <Badge variant="outline" className="px-4 py-1 text-md bg-white">
@@ -93,6 +103,7 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
                 <TableHeader className="bg-gray-50">
                   <TableRow>
                     <TableHead>Order #</TableHead>
+                    <TableHead>Product Details</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Delivery Status</TableHead>
@@ -100,17 +111,65 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customer.orders.map((o) => (
-                    <TableRow key={o.id}>
-                      <TableCell className="font-bold">{o.order_number}</TableCell>
-                      <TableCell>{new Date(o.ordered_at).toLocaleDateString()}</TableCell>
-                      <TableCell>₹{o.total_price}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{o.delivery_status.toUpperCase()}</Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-500">{o.tracking_number || 'N/A'}</TableCell>
-                    </TableRow>
-                  ))}
+                  {customer.orders.map((o) => {
+                    let productName = "Unknown Product";
+                    try {
+                      const items = JSON.parse(o.line_items || "[]");
+                      if (items && items.length > 0) {
+                        productName = items[0].name || "Unknown Product";
+                      }
+                    } catch (e) {
+                      // ignore
+                    }
+                    const productTemplate = productName.length > 40 ? productName.substring(0, 40) + "..." : productName;
+
+                    return (
+                      <TableRow key={o.id}>
+                        <TableCell className="font-bold">{o.order_number}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1 text-sm">
+                            <span className="font-medium text-gray-800">{productTemplate}</span>
+                            <a href={`https://cureforever.in/search?q=${encodeURIComponent(productName)}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline w-fit">
+                              View Product ↗
+                            </a>
+                          </div>
+                        </TableCell>
+                        <TableCell>{new Date(o.ordered_at).toLocaleDateString()}</TableCell>
+                        <TableCell>₹{o.total_price}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{o.delivery_status.toUpperCase()}</Badge>
+                          {o.delivery_status === 'delivered' && o.delivered_at && (() => {
+                            const daysSinceDelivery = differenceInDays(startOfDay(new Date()), startOfDay(new Date(o.delivered_at)));
+                            if (daysSinceDelivery >= 2 && daysSinceDelivery <= 3) {
+                              return (
+                                <Badge className="ml-2 bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-sm animate-pulse">
+                                  REVIEW CALL
+                                </Badge>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </TableCell>
+
+                        <TableCell className="text-xs text-gray-500">
+                          <div className="flex flex-col gap-1">
+                            <span>{o.tracking_number || 'N/A'}</span>
+                            {(o as any).metadata && Object.keys((o as any).metadata).length > 0 && (
+                              <div className="mt-2 p-1.5 bg-slate-50 rounded border border-slate-100 text-[10px]">
+                                <p className="font-bold mb-1 uppercase text-slate-400">Additional info:</p>
+                                {Object.entries((o as any).metadata).map(([key, val]) => (
+                                  <div key={key} className="flex gap-2">
+                                    <span className="text-slate-500">{key.replace(/_/g, ' ')}:</span>
+                                    <span className="text-slate-900 font-medium">{String(val)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </Card>

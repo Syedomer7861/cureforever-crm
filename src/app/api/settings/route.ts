@@ -17,14 +17,18 @@ export async function GET() {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
+    
+    // Strip non-updatable fields
+    const { id, created_at, updated_at, ...updateData } = body;
+    
     let settings = await prisma.setting.findFirst();
 
     if (!settings) {
-      settings = await prisma.setting.create({ data: body });
+      settings = await prisma.setting.create({ data: updateData });
     } else {
       settings = await prisma.setting.update({
         where: { id: settings.id },
-        data: body,
+        data: updateData,
       });
     }
 

@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { differenceInDays, startOfDay } from "date-fns";
+
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +81,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: any }
                     }>
                       {o.delivery_status.toUpperCase()}
                     </Badge>
+                    {o.delivery_status === 'delivered' && o.delivered_at && (() => {
+                      const daysSinceDelivery = differenceInDays(startOfDay(new Date()), startOfDay(new Date(o.delivered_at)));
+                      if (daysSinceDelivery >= 2 && daysSinceDelivery <= 3) {
+                        return (
+                          <Badge className="ml-2 bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-sm animate-pulse">
+                            REVIEW CALL
+                          </Badge>
+                        );
+                      }
+                      return null;
+                    })()}
+
                   </TableCell>
                   <TableCell className="text-xs text-slate-500">{o.tracking_number || 'No AWB'}</TableCell>
                 </TableRow>

@@ -6,8 +6,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { differenceInDays, format, isToday, startOfDay } from "date-fns";
+import { useRouter } from "next/navigation";
 
 export function TaskCard({ task }: { task: any }) {
+  const router = useRouter();
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,22 +18,69 @@ export function TaskCard({ task }: { task: any }) {
     setLoading(true);
     await completeTask(task.id, "done", note);
     setLoading(false);
+    router.refresh();
   };
 
   const handleSkip = async () => {
     setLoading(true);
     await skipTask(task.id, note || "Skipped from dashboard");
     setLoading(false);
+    router.refresh();
   };
+
+  let productName = "Unknown Product";
+  try {
+    const items = JSON.parse(task.order?.line_items || "[]");
+    if (items && items.length > 0) {
+      productName = items[0].name || "Unknown Product";
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  const productTemplate = productName.length > 40 ? productName.substring(0, 40) + "..." : productName;
+
+  const dueDate = startOfDay(new Date(task.due_date));
+  const today = startOfDay(new Date());
+  const daysDiff = differenceInDays(dueDate, today);
+  
+  let dateText = "";
+  let dateColor = "text-gray-500";
+  if (isToday(dueDate)) {
+    dateText = "Due Today!";
+    dateColor = "text-amber-600 font-bold";
+  } else if (daysDiff < 0) {
+    dateText = `Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? 's' : ''} (${format(dueDate, 'MMM d')})`;
+    dateColor = "text-red-600 font-bold";
+  } else {
+    dateText = `Call scheduled in ${daysDiff} day${daysDiff > 1 ? 's' : ''} (${format(dueDate, 'MMM d')})`;
+    dateColor = "text-emerald-600 font-medium";
+  }
 
   return (
     <Card className="mb-4 shadow-sm border-gray-200">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold">{task.customer.name}</CardTitle>
-          <Badge variant={task.task_type === 'review' ? 'secondary' : 'default'}>
-            {task.task_type.toUpperCase()}
-          </Badge>
+          <div>
+            <CardTitle className="text-lg font-bold">{task.customer.name}</CardTitle>
+            <p className={`text-xs mt-1 ${dateColor}`}>{dateText}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {task.task_type === 'review' && task.order?.delivered_at && (() => {
+               const daysSinceDelivery = differenceInDays(startOfDay(new Date()), startOfDay(new Date(task.order.delivered_at)));
+               if (daysSinceDelivery >= 2 && daysSinceDelivery <= 3) {
+                 return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 animate-pulse text-[10px] h-5 px-1.5 font-bold italic">Perfect Timing</Badge>
+               }
+               return null;
+            })()}
+            <Badge 
+              variant={task.task_type === 'review' ? 'secondary' : 'default'} 
+              className={`ml-2 mt-1 ${task.task_type === 'review' ? 'bg-purple-100 text-purple-800 border-purple-200' : ''}`}
+            >
+              {task.task_type.toUpperCase()}
+            </Badge>
+          </div>
+
         </div>
         <a 
           href={`tel:${task.customer.phone}`} 
@@ -40,7 +90,27 @@ export function TaskCard({ task }: { task: any }) {
           {task.customer.phone}
         </a>
       </CardHeader>
-      <CardContent className="pb-2 text-sm">
+      <CardContent className="pb-2 text-sm space-y-2">
+        <p className="flex items-center gap-1 text-gray-700">
+          <strong>Email:</strong> {task.customer.email ? (
+            <a href={`mailto:${task.customer.email}`} className="text-blue-600 hover:underline">{task.customer.email}</a>
+          ) : (
+            <span className="text-gray-400 italic">Not provided</span>
+          )}
+        </p>
+
+        <div className="my-2 p-3 bg-gray-50 rounded border border-gray-100">
+          <p className="mb-1 text-gray-800">
+            <strong>Product:</strong> {productTemplate}
+          </p>
+          <a href={`https://cureforever.in/search?q=${encodeURIComponent(productName)}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline">
+            View Product ↗
+          </a>
+          <p className="mt-2 text-xs text-gray-500">
+            <strong>Last ordered:</strong> {task.order.ordered_at ? new Date(task.order.ordered_at).toLocaleDateString() : 'N/A'} 
+          </p>
+        </div>
+
         <p><strong>Order:</strong> {task.order.order_number || task.order.shopify_order_id}</p>
         <p><strong>Status:</strong> {task.order.delivery_status}</p>
         <div className="mt-4">
